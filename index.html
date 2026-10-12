@@ -5,16 +5,118 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Custom Vocabulary Jukebox</title>
     <style>
-        :root {
+        :root, body[data-theme="jukebox"] {
             --neon-pink: #ff00ff;
             --neon-blue: #00ffff;
             --retro-gold: #ffd700;
-            --wood: #5d2906;
+            --bg: #1a1a1a;
+            --bg-image: none;
+            --frame: linear-gradient(to bottom, #8b4513, #5d2906);
+            --frame-border: 15px solid #333;
+            --frame-radius: 80px 80px 20px 20px;
+            --frame-top: 20px solid var(--retro-gold);
+            --frame-shadow: 0 0 50px rgba(255, 0, 255, 0.3), inset 0 0 20px black;
+            --ink: white;
+            --muted: #aaa;
+            --panel: #000;
+            --panel-border: #444;
+            --chip: #222;
+            --nav-bg: #222;
+            --nav: #444;
+            --input-bg: #111;
+            --bubble-ink: black;
+            --bubble-shadow: #b8860b;
+            --font: 'Arial Rounded MT Bold', 'Helvetica', sans-serif;
+        }
+        body[data-theme="concurso"] {
+            --neon-pink: #ff2d55;
+            --neon-blue: #ffe14a;
+            --retro-gold: #ffe14a;
+            --bg: #071033;
+            --bg-image: radial-gradient(circle at 50% -10%, rgba(255,225,74,0.45), transparent 42%), radial-gradient(circle at 15% 80%, rgba(255,45,85,0.25), transparent 30%);
+            --frame: linear-gradient(180deg, #12306e, #071033 70%);
+            --frame-border: 10px solid #ffe14a;
+            --frame-radius: 18px;
+            --frame-top: 8px solid #ff2d55;
+            --frame-shadow: 0 0 40px rgba(255, 225, 74, 0.35);
+            --panel: #0b1b4a;
+            --panel-border: #ffe14a;
+            --chip: #142a66;
+            --nav-bg: #0b1b4a;
+            --nav: #1d3d86;
+            --input-bg: #091433;
+            --bubble-ink: #1a1200;
+            --bubble-shadow: #b45309;
+        }
+        body[data-theme="parchis"] {
+            --neon-pink: #e11d48;
+            --neon-blue: #2563eb;
+            --retro-gold: #facc15;
+            --bg: #f6e7c1;
+            --bg-image: radial-gradient(circle at 20% 20%, #ef4444 0 8px, transparent 9px), radial-gradient(circle at 80% 30%, #eab308 0 8px, transparent 9px), radial-gradient(circle at 30% 80%, #22c55e 0 8px, transparent 9px), radial-gradient(circle at 75% 75%, #2563eb 0 8px, transparent 9px);
+            --frame: linear-gradient(180deg, #fff7e6, #f3d7a1);
+            --frame-border: 12px solid #7c4a1e;
+            --frame-radius: 28px;
+            --frame-top: 10px solid #e11d48;
+            --frame-shadow: 0 12px 0 #5c3310;
+            --ink: #3b2412;
+            --muted: #6b4a2a;
+            --panel: #fffaf0;
+            --panel-border: #7c4a1e;
+            --chip: #fff1d6;
+            --nav-bg: #f8e4bc;
+            --nav: #f3d7a1;
+            --input-bg: #fff;
+            --bubble-ink: #3b2412;
+            --bubble-shadow: #a16207;
+        }
+        body[data-theme="espacio"] {
+            --neon-pink: #c084fc;
+            --neon-blue: #22d3ee;
+            --retro-gold: #a5f3fc;
+            --bg: #050816;
+            --bg-image: radial-gradient(1px 1px at 10% 20%, #fff, transparent), radial-gradient(1px 1px at 30% 70%, #fff, transparent), radial-gradient(1.5px 1.5px at 70% 30%, #fff, transparent), radial-gradient(1px 1px at 85% 75%, #fff, transparent), radial-gradient(circle at 80% 10%, rgba(192,132,252,0.35), transparent 28%);
+            --frame: linear-gradient(180deg, #1e1b4b, #020617);
+            --frame-border: 2px solid #22d3ee;
+            --frame-radius: 24px;
+            --frame-top: 0 solid transparent;
+            --frame-shadow: 0 0 30px rgba(34, 211, 238, 0.35), inset 0 0 40px rgba(192, 132, 252, 0.15);
+            --panel: #020617;
+            --panel-border: #312e81;
+            --chip: #111827;
+            --nav-bg: #0f172a;
+            --nav: #1e1b4b;
+            --input-bg: #020617;
+            --bubble-ink: #042f2e;
+            --bubble-shadow: #0e7490;
+        }
+        body[data-theme="paisaje"] {
+            --neon-pink: #ea580c;
+            --neon-blue: #15803d;
+            --retro-gold: #f59e0b;
+            --bg: #7dd3fc;
+            --bg-image: linear-gradient(#7dd3fc, #bbf7d0 55%, #86efac);
+            --frame: linear-gradient(180deg, #fff7ed, #ffedd5);
+            --frame-border: 8px solid #166534;
+            --frame-radius: 36px;
+            --frame-top: 0 solid transparent;
+            --frame-shadow: 0 16px 30px rgba(22, 101, 52, 0.25);
+            --ink: #14532d;
+            --muted: #3f6212;
+            --panel: #fffbeb;
+            --panel-border: #65a30d;
+            --chip: #ecfccb;
+            --nav-bg: #d9f99d;
+            --nav: #bef264;
+            --input-bg: #fff;
+            --bubble-ink: #14532d;
+            --bubble-shadow: #ca8a04;
         }
         body {
-            background-color: #1a1a1a;
-            font-family: 'Arial Rounded MT Bold', 'Helvetica', sans-serif;
-            color: white;
+            background-color: var(--bg);
+            background-image: var(--bg-image);
+            font-family: var(--font, 'Arial Rounded MT Bold', 'Helvetica', sans-serif);
+            color: var(--ink);
             display: flex;
             justify-content: center;
             padding: 15px;
@@ -23,12 +125,12 @@
         #jukebox-container {
             width: 100%;
             max-width: 680px;
-            background: linear-gradient(to bottom, #8b4513, #5d2906);
-            border: 15px solid #333;
-            border-radius: 80px 80px 20px 20px;
+            background: var(--frame);
+            border: var(--frame-border);
+            border-radius: var(--frame-radius);
             padding: 25px;
-            box-shadow: 0 0 50px rgba(255, 0, 255, 0.3), inset 0 0 20px black;
-            border-top: 20px solid var(--retro-gold);
+            box-shadow: var(--frame-shadow);
+            border-top: var(--frame-top);
         }
         .stats-bar {
             display: flex;
@@ -52,13 +154,13 @@
             flex-wrap: wrap;
             justify-content: space-around;
             margin-bottom: 15px;
-            background: #222;
+            background: var(--nav-bg);
             padding: 8px;
             border-radius: 10px;
             gap: 6px;
         }
         .nav-btn {
-            background: #444;
+            background: var(--nav);
             color: var(--retro-gold);
             border: none;
             padding: 10px 12px;
@@ -74,8 +176,8 @@
             box-shadow: 0 0 15px var(--neon-pink);
         }
         .screen {
-            background: #000;
-            border: 5px solid #444;
+            background: var(--panel);
+            border: 5px solid var(--panel-border);
             border-radius: 15px;
             padding: 20px;
             min-height: 480px;
@@ -86,11 +188,11 @@
 
         /* STUDY */
         .study-row {
-            display: flex; align-items: center; background: #222;
+            display: flex; align-items: center; background: var(--chip);
             margin-bottom: 8px; padding: 10px; border-radius: 10px;
         }
         .study-input {
-            background: #111; border: 2px solid #444; color: white;
+            background: var(--input-bg); border: 2px solid var(--panel-border); color: var(--ink);
             padding: 8px; border-radius: 5px; width: 130px; text-align: center;
         }
         .study-input.correct { border-color: var(--neon-blue); box-shadow: 0 0 10px var(--neon-blue); }
@@ -102,13 +204,13 @@
         }
         .letter-bubble {
             background: var(--retro-gold);
-            color: black;
+            color: var(--bubble-ink);
             width: 48px; height: 48px;
             display: flex; align-items: center; justify-content: center;
             border-radius: 50%;
             font-size: 1.4rem; font-weight: bold;
             cursor: pointer;
-            box-shadow: 0 4px 0 #b8860b;
+            box-shadow: 0 4px 0 var(--bubble-shadow);
             transition: 0.1s;
         }
         .letter-bubble:active { transform: translateY(4px); box-shadow: none; }
@@ -130,11 +232,11 @@
         .vinyl-record.playing { animation-play-state: running; border-color: var(--neon-blue); }
         @keyframes rotate { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
         .option-btn {
-            background: #333; border: 2px solid var(--neon-blue);
-            color: white; padding: 14px; border-radius: 10px; cursor: pointer;
+            background: var(--chip); border: 2px solid var(--neon-blue);
+            color: var(--ink); padding: 14px; border-radius: 10px; cursor: pointer;
             font-weight: bold;
         }
-        .option-btn:hover { background: #444; }
+        .option-btn:hover { filter: brightness(1.08); }
 
         /* SPEAK */
         .speak-box {
@@ -153,12 +255,12 @@
         /* SETUP */
         .setup-form { text-align: left; margin-bottom: 15px; }
         .setup-form input, .setup-form button {
-            padding: 8px; margin: 4px 0; border-radius: 5px; border: 1px solid #555;
-            background: #222; color: white;
+            padding: 8px; margin: 4px 0; border-radius: 5px; border: 1px solid var(--panel-border);
+            background: var(--input-bg); color: var(--ink);
         }
         .setup-form button { background: var(--retro-gold); color: black; font-weight: bold; cursor: pointer; }
         .vocab-list { max-height: 220px; overflow-y: auto; text-align: left; }
-        .vocab-item { background: #222; margin: 5px 0; padding: 8px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; }
+        .vocab-item { background: var(--chip); margin: 5px 0; padding: 8px; border-radius: 6px; display: flex; justify-content: space-between; align-items: center; color: var(--ink); }
         .controls { margin-top: 15px; }
         .btn-control {
             padding: 10px 18px; border-radius: 5px; border: none;
@@ -166,12 +268,12 @@
             background: #666; color: white;
         }
         .btn-control.primary { background: var(--neon-blue); color: black; }
-        .note { font-size: 0.85rem; color: #aaa; margin-top: 10px; }
+        .note { font-size: 0.85rem; color: var(--muted); margin-top: 10px; }
 
         /* EMOJI PICKER */
         .emoji-picker {
             display: none;
-            background: #111;
+            background: var(--panel);
             border: 2px solid var(--retro-gold);
             border-radius: 10px;
             padding: 10px;
@@ -183,7 +285,7 @@
         .emoji-picker.show { display: block; }
         .emoji-cats { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 8px; }
         .emoji-cat {
-            background: #333; border: 1px solid #555; color: white;
+            background: var(--nav); border: 1px solid var(--panel-border); color: var(--ink);
             padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 0.85rem;
         }
         .emoji-cat.active { background: var(--neon-pink); }
@@ -192,7 +294,20 @@
             font-size: 1.6rem; cursor: pointer; padding: 2px;
             border-radius: 4px;
         }
-        .emoji-item:hover { background: #333; }
+        .emoji-item:hover { background: var(--nav); }
+        .theme-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 8px 0 16px; }
+        .theme-card {
+            border: 2px solid var(--panel-border);
+            background: var(--chip);
+            color: var(--ink);
+            border-radius: 12px;
+            padding: 10px 8px;
+            cursor: pointer;
+            text-align: left;
+        }
+        .theme-card strong { display: block; }
+        .theme-card small { color: var(--muted); }
+        .theme-card.active { border-color: var(--neon-pink); box-shadow: 0 0 10px var(--neon-pink); }
         .img-preview { max-width: 50px; max-height: 50px; vertical-align: middle; border-radius: 4px; }
     </style>
 </head>
@@ -214,6 +329,8 @@
     <div class="screen">
         <!-- SETUP -->
         <div id="tab-setup" class="game-section">
+            <h3 style="color: var(--retro-gold); margin-top:0;">Aspecto del juego</h3>
+            <div class="theme-grid" id="theme-grid"></div>
             <h3 style="color: var(--retro-gold); margin-top:0;">Añade tus conceptos</h3>
             <button class="btn-control" onclick="closeSetup()" style="margin-bottom:12px;">Cerrar ajustes</button>
             <div class="setup-form">
@@ -694,7 +811,40 @@
         recognition.start();
     }
 
+    const gameThemes = [
+        { id: 'jukebox', name: 'Jukebox', hint: 'Madera y neón' },
+        { id: 'concurso', name: 'Concurso de TV', hint: 'Plató y focos' },
+        { id: 'parchis', name: 'Parchís', hint: 'Tablero de colores' },
+        { id: 'espacio', name: 'Juego espacial', hint: 'Estrellas' },
+        { id: 'paisaje', name: 'Pintar paisajes', hint: 'Cielo y campo' }
+    ];
+
+    function applyTheme(id) {
+        const theme = gameThemes.some(t => t.id === id) ? id : 'jukebox';
+        document.body.dataset.theme = theme;
+        localStorage.setItem('vocabTheme', theme);
+        document.querySelectorAll('.theme-card').forEach(card => {
+            card.classList.toggle('active', card.dataset.theme === theme);
+        });
+    }
+
+    function renderThemePicker() {
+        const grid = document.getElementById('theme-grid');
+        if (!grid || grid.childElementCount) return;
+        gameThemes.forEach(t => {
+            const b = document.createElement('button');
+            b.type = 'button';
+            b.className = 'theme-card';
+            b.dataset.theme = t.id;
+            b.innerHTML = '<strong>' + t.name + '</strong><small>' + t.hint + '</small>';
+            b.onclick = () => applyTheme(t.id);
+            grid.appendChild(b);
+        });
+        applyTheme(localStorage.getItem('vocabTheme') || 'jukebox');
+    }
+
     // Init
+    renderThemePicker();
     updateVocabCount();
     document.getElementById('score-val').innerText = score;
     renderVocabList();
