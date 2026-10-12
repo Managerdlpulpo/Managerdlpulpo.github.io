@@ -678,8 +678,10 @@
     }
 
     // --- SPELL ---
+    let spellStack = [];
     function initSpellMode() {
         if (vocab.length === 0) return;
+        spellStack = [];
         currentItem = vocab[Math.floor(Math.random() * vocab.length)];
         currentInput = "";
         document.getElementById('scr-emoji').innerHTML = renderImg(currentItem, true);
@@ -703,6 +705,7 @@
     function handleSpellClick(char, element) {
         if (element.classList.contains('used')) return;
         element.classList.add('used');
+        spellStack.push(element);
         currentInput += char.toLowerCase();
         let display = currentInput.toUpperCase();
         let dots = "_".repeat(currentItem.en.length - currentInput.length);
@@ -720,13 +723,26 @@
             }
         }
     }
+    function undoSpellLetter() {
+        if (!spellStack.length || !currentItem) return;
+        const element = spellStack.pop();
+        element.classList.remove('used');
+        currentInput = currentInput.slice(0, -1);
+        document.getElementById('scr-answer').innerText = currentInput.toUpperCase() + "_".repeat(currentItem.en.length - currentInput.length);
+        document.getElementById('scr-answer').style.color = "var(--neon-pink)";
+    }
     window.addEventListener('keydown', (e) => {
         if (activeTab !== 'scramble') return;
+        if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA')) return;
+        if (e.key === "Backspace") {
+            e.preventDefault();
+            undoSpellLetter();
+            return;
+        }
         const key = e.key.toUpperCase();
         const bubbles = Array.from(document.querySelectorAll('.letter-bubble:not(.used)'));
         const target = bubbles.find(b => b.innerText === key);
         if (target) handleSpellClick(key, target);
-        if (e.key === "Backspace") initSpellMode();
     });
 
     // --- LISTEN ---
