@@ -309,22 +309,6 @@
         .theme-card small { color: var(--muted); }
         .theme-card.active { border-color: var(--neon-pink); box-shadow: 0 0 10px var(--neon-pink); }
         .img-preview { max-width: 50px; max-height: 50px; vertical-align: middle; border-radius: 4px; }
-        .host { font-size: 1.25rem; min-height: 2.4rem; margin-bottom: 6px; }
-        .timer { height: 10px; background: rgba(0,0,0,.25); border-radius: 8px; overflow: hidden; margin: 8px 0 12px; }
-        .timer > div { height: 100%; width: 100%; background: var(--neon-pink); transform-origin: left center; }
-        .board { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin: 8px auto; max-width: 320px; }
-        .cell { aspect-ratio: 1; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; }
-        .cell.red { background: #ef4444; }
-        .cell.blue { background: #2563eb; }
-        .cell.yellow { background: #facc15; color: #3b2412; }
-        .cell.green { background: #22c55e; }
-        .cell.here { outline: 3px solid #fff; box-shadow: 0 0 0 3px var(--neon-pink); }
-        .landscape { position: relative; height: 190px; border-radius: 18px; overflow: hidden; background: linear-gradient(#7dd3fc, #bbf7d0 60%, #4ade80); margin-bottom: 10px; }
-        .land-item { position: absolute; font-size: 2.2rem; }
-        .ship-track { display: flex; justify-content: space-between; align-items: flex-end; min-height: 70px; margin: 8px 0 12px; }
-        .sector { font-size: 1.5rem; opacity: .35; }
-        .sector.on { opacity: 1; transform: scale(1.15); }
-        .type-line { width: 80%; max-width: 280px; font-size: 1.4rem; text-align: center; padding: 10px; border-radius: 10px; border: 2px solid var(--panel-border); background: var(--input-bg); color: var(--ink); }
     </style>
 </head>
 <body>
@@ -335,7 +319,7 @@
         <span id="vocab-count">0 palabras</span>
     </div>
     
-    <div class="nav-tabs" id="nav-tabs">
+    <div class="nav-tabs">
         <button class="nav-btn active" onclick="showTab('learn', this)">STUDY</button>
         <button class="nav-btn" onclick="showTab('scramble', this)">SPELL</button>
         <button class="nav-btn" onclick="showTab('sound', this)">LISTEN</button>
@@ -408,7 +392,6 @@
                 <button class="btn-control primary" onclick="speakCurrent()">🔊 Escuchar modelo</button>
             </div>
         </div>
-        <div id="theme-play" class="game-section"></div>
     </div>
 </div>
 
@@ -584,11 +567,11 @@
     }
 
     function closeSetup() {
-        launchPlay();
+        const studyBtn = document.querySelector('.nav-btn');
+        showTab('learn', studyBtn);
     }
 
     function openSetup() {
-        clearQuizTimer();
         activeTab = 'setup';
         document.querySelectorAll('.game-section').forEach(s => s.classList.remove('active'));
         document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
@@ -738,8 +721,7 @@
         }
     }
     window.addEventListener('keydown', (e) => {
-        if (activeTab !== 'scramble' && activeTab !== 'theme') return;
-        if (!document.querySelector('#theme-play.active, #tab-scramble.active')) return;
+        if (activeTab !== 'scramble') return;
         const key = e.key.toUpperCase();
         const bubbles = Array.from(document.querySelectorAll('.letter-bubble:not(.used)'));
         const target = bubbles.find(b => b.innerText === key);
@@ -786,7 +768,6 @@
         document.getElementById('speak-feedback').innerText = 'Pulsa el micrófono y di la palabra';
         document.getElementById('speak-feedback').style.color = 'white';
         document.getElementById('mic-btn').classList.remove('listening');
-        afterSpeak = null;
     }
     function startSpeaking() {
         if (!recognition) {
@@ -810,7 +791,7 @@
                 document.getElementById('speak-feedback').innerText = '¡Perfecto! Dijiste: ' + said;
                 document.getElementById('speak-feedback').style.color = 'lime';
                 speak('Great!');
-                setTimeout(() => { if (afterSpeak) afterSpeak(); else initSpeakMode(); }, 1200);
+                setTimeout(initSpeakMode, 1200);
             } else {
                 updateScore(-5);
                 document.getElementById('speak-feedback').innerText = 'Intentaste: "' + said + '". Inténtalo de nuevo.';
@@ -831,11 +812,11 @@
     }
 
     const gameThemes = [
-        { id: 'jukebox', name: 'Jukebox', hint: 'Estudio, deletreo, escucha y habla' },
-        { id: 'concurso', name: 'Concurso de TV', hint: 'El presentador pregunta y hay tiempo' },
-        { id: 'parchis', name: 'Parchís', hint: 'Avanzas casillas si aciertas' },
-        { id: 'espacio', name: 'Juego espacial', hint: 'Misiones: oír, descifrar, informar' },
-        { id: 'paisaje', name: 'Pintar paisajes', hint: 'Cada acierto pinta el cuadro' }
+        { id: 'jukebox', name: 'Jukebox', hint: 'Madera y neón' },
+        { id: 'concurso', name: 'Concurso de TV', hint: 'Plató y focos' },
+        { id: 'parchis', name: 'Parchís', hint: 'Tablero de colores' },
+        { id: 'espacio', name: 'Juego espacial', hint: 'Estrellas' },
+        { id: 'paisaje', name: 'Pintar paisajes', hint: 'Cielo y campo' }
     ];
 
     function applyTheme(id) {
@@ -845,387 +826,6 @@
         document.querySelectorAll('.theme-card').forEach(card => {
             card.classList.toggle('active', card.dataset.theme === theme);
         });
-    }
-
-    function launchPlay() {
-        const theme = document.body.dataset.theme || 'jukebox';
-        const nav = document.getElementById('nav-tabs');
-        if (theme === 'jukebox') {
-            nav.style.display = 'flex';
-            const btn = nav.querySelector('.nav-btn');
-            showTab('learn', btn);
-            return;
-        }
-        nav.style.display = 'none';
-        document.querySelectorAll('.game-section').forEach(s => s.classList.remove('active'));
-        document.getElementById('theme-play').classList.add('active');
-        activeTab = 'theme';
-        renderThemeGame();
-    }
-
-    let afterSpeak = null;
-    let quizTimer = null;
-    let themeRound = 0;
-    let parchisPos = parseInt(localStorage.getItem('parchisPos') || '0', 10);
-    let paintParts = parseInt(localStorage.getItem('paintParts') || '0', 10);
-    let spaceSector = parseInt(localStorage.getItem('spaceSector') || '0', 10);
-    const paintLayers = [
-        { e: '☀️', s: 'left:16px;top:12px;' },
-        { e: '☁️', s: 'right:24px;top:18px;' },
-        { e: '⛰️', s: 'left:30px;bottom:18px;' },
-        { e: '🌳', s: 'left:42%;bottom:16px;' },
-        { e: '🏠', s: 'right:36px;bottom:14px;' },
-        { e: '🌸', s: 'left:18%;bottom:10px;' },
-        { e: '🐦', s: 'right:30%;top:40px;' },
-        { e: '🌈', s: 'left:28%;top:8px;font-size:2.8rem;' }
-    ];
-
-    function clearQuizTimer() {
-        if (quizTimer) clearInterval(quizTimer);
-        quizTimer = null;
-    }
-
-    function needWords() {
-        if (vocab.length) return false;
-        alert('Todavía no hay palabras. Mantén pulsada la barra de puntuación para abrir los ajustes.');
-        return true;
-    }
-
-    function makeChoices(onPick) {
-        const wrap = document.createElement('div');
-        wrap.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:10px;';
-        let options = [currentItem.en];
-        while (options.length < 4 && options.length < vocab.length) {
-            const r = vocab[Math.floor(Math.random() * vocab.length)].en;
-            if (!options.includes(r)) options.push(r);
-        }
-        options.sort(() => Math.random() - 0.5).forEach(o => {
-            const b = document.createElement('button');
-            b.className = 'option-btn buzzer';
-            b.textContent = o.toUpperCase();
-            b.onclick = () => onPick(o === currentItem.en, b);
-            wrap.appendChild(b);
-        });
-        return wrap;
-    }
-
-    function makeSpellPool(onDone) {
-        const box = document.createElement('div');
-        box.className = 'answer-box';
-        box.id = 'scr-answer';
-        box.textContent = '_'.repeat(currentItem.en.length);
-        const pool = document.createElement('div');
-        pool.className = 'letter-pool';
-        pool.id = 'scr-letters';
-        currentInput = '';
-        const letters = currentItem.en.toUpperCase().split('').map((char, id) => ({ char, id }));
-        letters.sort(() => Math.random() - 0.5);
-        letters.forEach(item => {
-            const b = document.createElement('div');
-            b.className = 'letter-bubble';
-            b.textContent = item.char;
-            b.onclick = () => {
-                if (b.classList.contains('used')) return;
-                b.classList.add('used');
-                currentInput += item.char.toLowerCase();
-                box.textContent = currentInput.toUpperCase() + '_'.repeat(currentItem.en.length - currentInput.length);
-                if (currentInput.length === currentItem.en.length) onDone(currentInput === currentItem.en.toLowerCase());
-            };
-            pool.appendChild(b);
-        });
-        return [box, pool];
-    }
-
-    function renderThemeGame() {
-        clearQuizTimer();
-        const root = document.getElementById('theme-play');
-        const theme = document.body.dataset.theme;
-        if (needWords()) { root.innerHTML = ''; return; }
-        currentItem = vocab[Math.floor(Math.random() * vocab.length)];
-        if (theme === 'concurso') renderConcurso(root);
-        else if (theme === 'parchis') renderParchis(root);
-        else if (theme === 'espacio') renderEspacio(root);
-        else renderPaisaje(root);
-    }
-
-    function renderConcurso(root) {
-        const kind = themeRound % 3;
-        root.innerHTML = '';
-        const host = document.createElement('div');
-        host.className = 'host';
-        const timer = document.createElement('div');
-        timer.className = 'timer';
-        const bar = document.createElement('div');
-        timer.appendChild(bar);
-        root.append(host, timer);
-        let done = false;
-        const succeed = () => {
-            if (done) return;
-            done = true;
-            clearQuizTimer();
-            updateScore(kind === 2 ? 20 : 12);
-            host.textContent = '¡Correcto! Punto para el concursante.';
-            speak('Perfect!');
-            themeRound++;
-            setTimeout(renderThemeGame, 900);
-        };
-        const fail = () => {
-            if (done) return;
-            done = true;
-            clearQuizTimer();
-            updateScore(-4);
-            host.textContent = 'Tiempo o error. La palabra era ' + currentItem.en + '.';
-            themeRound++;
-            setTimeout(renderThemeGame, 1100);
-        };
-        let left = 15;
-        bar.style.width = '100%';
-        quizTimer = setInterval(() => {
-            left -= 0.1;
-            bar.style.width = Math.max(0, (left / 15) * 100) + '%';
-            if (left <= 0) fail();
-        }, 100);
-        if (kind === 0) {
-            host.textContent = 'Escucha y pulsa el pulsador correcto.';
-            const vinyl = document.createElement('div');
-            vinyl.className = 'vinyl-record';
-            vinyl.id = 'main-vinyl';
-            vinyl.onclick = () => speak(currentItem.en);
-            root.appendChild(vinyl);
-            root.appendChild(makeChoices(ok => ok ? succeed() : fail()));
-            speak(currentItem.en);
-        } else if (kind === 1) {
-            host.textContent = 'Ordena las letras del panel.';
-            const pic = document.createElement('div');
-            pic.style.fontSize = '3.2rem';
-            pic.innerHTML = renderImg(currentItem, true);
-            root.appendChild(pic);
-            makeSpellPool(ok => ok ? succeed() : fail()).forEach(n => root.appendChild(n));
-            activeTab = 'theme';
-        } else {
-            host.textContent = 'Di la palabra en inglés. El micrófono es tu pulsador.';
-            const word = document.createElement('div');
-            word.className = 'speak-box';
-            word.textContent = currentItem.en.toUpperCase();
-            const fb = document.createElement('div');
-            fb.className = 'feedback';
-            fb.id = 'speak-feedback';
-            fb.textContent = 'Pulsa y habla';
-            const mic = document.createElement('button');
-            mic.className = 'mic-btn';
-            mic.id = 'mic-btn';
-            mic.textContent = '🎤 Responder';
-            mic.onclick = () => { afterSpeak = () => { themeRound++; renderThemeGame(); }; startSpeaking(); };
-            root.append(word, mic, fb);
-            requestMicPermissionOnce();
-        }
-    }
-
-    function renderParchis(root) {
-        const colors = ['red', 'blue', 'yellow', 'green'];
-        const labels = ['Escribe', 'Escucha', 'Deletrea', 'Habla'];
-        root.innerHTML = '';
-        const title = document.createElement('div');
-        title.className = 'host';
-        title.textContent = parchisPos >= 12 ? '¡Has llegado a casa!' : 'Casilla ' + (parchisPos + 1) + ' · ' + labels[parchisPos % 4];
-        const board = document.createElement('div');
-        board.className = 'board';
-        const path = [[0,0],[0,1],[0,2],[0,3],[1,3],[2,3],[3,3],[3,2],[3,1],[3,0],[2,0],[1,0]];
-        const cells = Array.from({ length: 16 }, () => {
-            const d = document.createElement('div');
-            board.appendChild(d);
-            return d;
-        });
-        path.forEach((pos, i) => {
-            const cell = cells[pos[0] * 4 + pos[1]];
-            cell.className = 'cell ' + colors[i % 4] + (i === Math.min(parchisPos, 11) ? ' here' : '');
-            cell.textContent = i === Math.min(parchisPos, 11) ? '🔴' : (i + 1);
-        });
-        root.append(title, board);
-        if (parchisPos >= 12) {
-            const again = document.createElement('button');
-            again.className = 'btn-control primary';
-            again.textContent = 'Otra partida';
-            again.onclick = () => { parchisPos = 0; localStorage.setItem('parchisPos', '0'); renderThemeGame(); };
-            root.appendChild(again);
-            return;
-        }
-        const advance = () => {
-            parchisPos = Math.min(12, parchisPos + 1);
-            localStorage.setItem('parchisPos', String(parchisPos));
-            updateScore(10);
-            speak('Yes!');
-            setTimeout(renderThemeGame, 700);
-        };
-        const stay = () => { updateScore(-3); setTimeout(renderThemeGame, 800); };
-        const kind = parchisPos % 4;
-        if (kind === 0) {
-            const hint = document.createElement('div');
-            hint.textContent = (currentItem.es || currentItem.img) + ' → escribe en inglés';
-            const input = document.createElement('input');
-            input.className = 'type-line';
-            input.placeholder = 'palabra';
-            const go = document.createElement('button');
-            go.className = 'btn-control primary';
-            go.textContent = 'Mover ficha';
-            go.onclick = () => input.value.trim().toLowerCase() === currentItem.en.toLowerCase() ? advance() : stay();
-            root.append(hint, input, go);
-        } else if (kind === 1) {
-            const vinyl = document.createElement('div');
-            vinyl.className = 'vinyl-record';
-            vinyl.id = 'main-vinyl';
-            vinyl.onclick = () => speak(currentItem.en);
-            root.appendChild(vinyl);
-            root.appendChild(makeChoices(ok => ok ? advance() : stay()));
-            speak(currentItem.en);
-        } else if (kind === 2) {
-            const pic = document.createElement('div');
-            pic.style.fontSize = '2.6rem';
-            pic.innerHTML = renderImg(currentItem, true);
-            root.appendChild(pic);
-            makeSpellPool(ok => ok ? advance() : stay()).forEach(n => root.appendChild(n));
-        } else {
-            const word = document.createElement('div');
-            word.className = 'speak-box';
-            word.textContent = currentItem.en.toUpperCase();
-            const fb = document.createElement('div');
-            fb.id = 'speak-feedback';
-            fb.className = 'feedback';
-            fb.textContent = 'Di la palabra para avanzar';
-            const mic = document.createElement('button');
-            mic.id = 'mic-btn';
-            mic.className = 'mic-btn';
-            mic.textContent = '🎤 Hablar';
-            mic.onclick = () => { afterSpeak = () => { parchisPos = Math.min(12, parchisPos + 1); localStorage.setItem('parchisPos', String(parchisPos)); renderThemeGame(); }; startSpeaking(); };
-            root.append(word, mic, fb);
-        }
-    }
-
-    function renderEspacio(root) {
-        const kind = spaceSector % 3;
-        const names = ['Transmisión', 'Descifrar', 'Informe al control'];
-        root.innerHTML = '';
-        const host = document.createElement('div');
-        host.className = 'host';
-        host.textContent = 'Sector ' + (spaceSector + 1) + ' · ' + names[kind];
-        const track = document.createElement('div');
-        track.className = 'ship-track';
-        for (let i = 0; i < 8; i++) {
-            const s = document.createElement('div');
-            s.className = 'sector' + (i <= spaceSector ? ' on' : '');
-            s.textContent = i === spaceSector ? '🚀' : '🪐';
-            track.appendChild(s);
-        }
-        root.append(host, track);
-        const nextSector = () => {
-            spaceSector++;
-            localStorage.setItem('spaceSector', String(spaceSector));
-            updateScore(12);
-            if (spaceSector >= 8) {
-                host.textContent = 'Misión cumplida. Vuelta a la base.';
-                spaceSector = 0;
-                localStorage.setItem('spaceSector', '0');
-                speak('Mission complete');
-            }
-            setTimeout(renderThemeGame, 800);
-        };
-        const fail = () => { updateScore(-4); host.textContent = 'Señal perdida. Era ' + currentItem.en + '.'; setTimeout(renderThemeGame, 1000); };
-        if (kind === 0) {
-            const vinyl = document.createElement('div');
-            vinyl.className = 'vinyl-record';
-            vinyl.id = 'main-vinyl';
-            vinyl.onclick = () => speak(currentItem.en);
-            const input = document.createElement('input');
-            input.className = 'type-line';
-            input.placeholder = 'qué has oído';
-            const go = document.createElement('button');
-            go.className = 'btn-control primary';
-            go.textContent = 'Enviar señal';
-            go.onclick = () => input.value.trim().toLowerCase() === currentItem.en.toLowerCase() ? nextSector() : fail();
-            root.append(vinyl, input, go);
-            speak(currentItem.en);
-        } else if (kind === 1) {
-            const pic = document.createElement('div');
-            pic.style.fontSize = '3rem';
-            pic.innerHTML = renderImg(currentItem, true);
-            root.appendChild(pic);
-            makeSpellPool(ok => ok ? nextSector() : fail()).forEach(n => root.appendChild(n));
-        } else {
-            const word = document.createElement('div');
-            word.className = 'speak-box';
-            word.textContent = currentItem.en.toUpperCase();
-            const fb = document.createElement('div');
-            fb.id = 'speak-feedback';
-            fb.className = 'feedback';
-            const mic = document.createElement('button');
-            mic.id = 'mic-btn';
-            mic.className = 'mic-btn';
-            mic.textContent = '🎤 Informar';
-            mic.onclick = () => { afterSpeak = () => { spaceSector = (spaceSector + 1) % 8; localStorage.setItem('spaceSector', String(spaceSector)); renderThemeGame(); }; startSpeaking(); };
-            root.append(word, mic, fb);
-        }
-    }
-
-    function renderPaisaje(root) {
-        root.innerHTML = '';
-        const land = document.createElement('div');
-        land.className = 'landscape';
-        paintLayers.slice(0, paintParts).forEach(p => {
-            const s = document.createElement('div');
-            s.className = 'land-item';
-            s.style.cssText = p.s;
-            s.textContent = p.e;
-            land.appendChild(s);
-        });
-        const host = document.createElement('div');
-        host.className = 'host';
-        root.append(land, host);
-        if (paintParts >= paintLayers.length) {
-            host.textContent = 'El paisaje está terminado.';
-            const again = document.createElement('button');
-            again.className = 'btn-control primary';
-            again.textContent = 'Pintar otro';
-            again.onclick = () => { paintParts = 0; localStorage.setItem('paintParts', '0'); renderThemeGame(); };
-            root.appendChild(again);
-            return;
-        }
-        const paint = () => {
-            paintParts++;
-            localStorage.setItem('paintParts', String(paintParts));
-            updateScore(8);
-            speak('Beautiful');
-            setTimeout(renderThemeGame, 600);
-        };
-        const miss = () => { updateScore(-2); host.textContent = 'Esa pincelada no era. La palabra es ' + currentItem.en + '.'; setTimeout(renderThemeGame, 1000); };
-        if (paintParts % 2 === 0) {
-            host.textContent = 'Escucha y escribe lo que vas a pintar.';
-            const vinyl = document.createElement('div');
-            vinyl.className = 'vinyl-record';
-            vinyl.id = 'main-vinyl';
-            vinyl.onclick = () => speak(currentItem.en);
-            const input = document.createElement('input');
-            input.className = 'type-line';
-            const go = document.createElement('button');
-            go.className = 'btn-control primary';
-            go.textContent = 'Pintar';
-            go.onclick = () => input.value.trim().toLowerCase() === currentItem.en.toLowerCase() ? paint() : miss();
-            root.append(vinyl, input, go);
-            speak(currentItem.en);
-        } else {
-            host.textContent = 'Mira el dibujo y escribe la palabra en inglés.';
-            const pic = document.createElement('div');
-            pic.style.fontSize = '3rem';
-            pic.innerHTML = renderImg(currentItem, true);
-            const small = document.createElement('div');
-            small.textContent = currentItem.es || '';
-            const input = document.createElement('input');
-            input.className = 'type-line';
-            const go = document.createElement('button');
-            go.className = 'btn-control primary';
-            go.textContent = 'Pintar';
-            go.onclick = () => input.value.trim().toLowerCase() === currentItem.en.toLowerCase() ? paint() : miss();
-            root.append(pic, small, input, go);
-        }
     }
 
     function renderThemePicker() {
@@ -1248,11 +848,7 @@
     updateVocabCount();
     document.getElementById('score-val').innerText = score;
     renderVocabList();
-    if ((document.body.dataset.theme || 'jukebox') === 'jukebox') {
-        if (vocab.length) renderStudy();
-    } else {
-        launchPlay();
-    }
+    if (vocab.length) renderStudy();
 
     // Ajustes ocultos: mantener pulsada la barra de puntuación ~1,2 s
     (function bindHiddenSetup() {
