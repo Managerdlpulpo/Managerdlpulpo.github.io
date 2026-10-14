@@ -308,6 +308,18 @@
         .theme-card strong { display: block; }
         .theme-card small { color: var(--muted); }
         .theme-card.active { border-color: var(--neon-pink); box-shadow: 0 0 10px var(--neon-pink); }
+        .timed-toggle {
+            background: transparent;
+            color: var(--retro-gold);
+            border: 1px solid var(--retro-gold);
+            border-radius: 999px;
+            padding: 4px 10px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 0.85rem;
+        }
+        .timed-toggle.on { background: var(--neon-pink); color: white; border-color: var(--neon-pink); }
+        #timer-label { min-width: 2.4rem; font-variant-numeric: tabular-nums; }
         .img-preview { max-width: 50px; max-height: 50px; vertical-align: middle; border-radius: 4px; }
     </style>
 </head>
@@ -316,6 +328,8 @@
 <div id="jukebox-container">
     <div class="stats-bar" id="stats-bar" title="Mantén pulsado para ajustes">
         <span>SCORE: <span id="score-val">0</span></span>
+        <button type="button" id="timed-toggle" class="timed-toggle">Contrarreloj</button>
+        <span id="timer-label"></span>
         <span id="vocab-count">0 palabras</span>
     </div>
     
@@ -402,7 +416,88 @@
     let score = parseInt(localStorage.getItem('vocabScore') || '0');
     let activeTab = 'setup';
     let recognition = null;
-    let micPermissionGranted = false;
+    let lastByMode = { scramble: '', sound: '', speak: '' };
+    let wordQueues = { scramble: [], sound: [], speak: [] };
+    let timedMode = localStorage.getItem('vocabTimed') === '1';
+    let roundTimer = null;
+    let roundToken = 0;
+    const ROUND_SECONDS = 20;
+
+    function nextWord(mode) {
+        if (!vocab.length) return null;
+        if (!wordQueues[mode].length) {
+            const bag = vocab.map((_, i) => i);
+            for (let i = bag.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                const tmp = bag[i];
+                bag[i] = bag[j];
+                bag[j] = tmp;
+            }
+            if (bag.length > 1 && vocab[bag[0]].en.toLowerCase() === lastByMode[mode]) {
+                const tmp = bag[0];
+                bag[0] = bag[1];
+                bag[1] = tmp;
+            }
+            wordQueues[mode] = bag;
+        }
+        const item = vocab[wordQueues[mode].shift()];
+        lastByMode[mode] = item ? item.en.toLowerCase() : '';
+        return item;
+    }
+    function resetWordQueues() {
+        wordQueues = { scramble: [], sound: [], speak: [] };
+        lastByMode = { scramble: '', sound: '', speak: '' };
+    }
+    function stopRoundTimer() {
+        if (roundTimer) clearInterval(roundTimer);
+        roundTimer = null;
+    }
+    function showTimer(left) {
+        const label = document.getElementById('timer-label');
+        if (!label) return;
+        label.textContent = timedMode && left !== '' && left !== null ? left + 's' : '';
+    }
+    function endRound() {
+        roundToken++;
+        stopRoundTimer();
+        showTimer('');
+    }
+    function beginRound(onExpire) {
+        endRound();
+        const token = ++roundToken;
+        if (!timedMode || activeTab === 'learn' || activeTab === 'setup') return;
+        let left = ROUND_SECONDS;
+        showTimer(left);
+        roundTimer = setInterval(() => {
+            if (token !== roundToken) return;
+            left -= 1;
+            showTimer(left);
+            if (left <= 0) {
+                stopRoundTimer();
+                if (token !== roundToken) return;
+                roundToken++;
+                onExpire();
+            }
+        }, 1000);
+    }
+    function paintTimedToggle() {
+        const b = document.getElementById('timed-toggle');
+        if (!b) return;
+        b.classList.toggle('on', timedMode);
+        b.textContent = timedMode ? 'Contrarreloj ON' : 'Contrarreloj';
+    }
+    function toggleTimedMode() {
+        timedMode = !timedMode;
+        localStorage.setItem('vocabTimed', timedMode ? '1' : '0');
+        paintTimedToggle();
+        if (!timedMode) {
+            endRound();
+            return;
+        }
+        if (activeTab === 'scramble') beginRound(() => { updateScore(-5); setTimeout(initSpellMode, 400); });
+        if (activeTab === 'sound') beginRound(() => { updateScore(-5); initSoundMatch(); });
+        if (activeTab === 'speak') beginRound(() => { updateScore(-5); initSpeakMode(); });
+    }
 
     // Banco amplio de emojis por categorías + mapeo para auto-detección
     const emojiBank = {
@@ -521,6 +616,7 @@
 
     function saveVocab() {
         localStorage.setItem('vocabJukebox', JSON.stringify(vocab));
+        resetWordQueues();
         updateVocabCount();
     }
     function updateVocabCount() {
@@ -556,7 +652,7 @@
         document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
         document.getElementById('tab-' + id).classList.add('active');
         if (btn) btn.classList.add('active');
-        if (id === 'learn') renderStudy();
+        if (id === 'learn') { endRound(); renderStudy(); }
         if (id === 'scramble') initSpellMode();
         if (id === 'sound') initSoundMatch();
         if (id === 'speak') {
@@ -572,6 +668,7 @@
     }
 
     function openSetup() {
+        endRound();
         activeTab = 'setup';
         document.querySelectorAll('.game-section').forEach(s => s.classList.remove('active'));
         document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
@@ -682,7 +779,8 @@
     function initSpellMode() {
         if (vocab.length === 0) return;
         spellStack = [];
-        currentItem = vocab[Math.floor(Math.random() * vocab.length)];
+        currentItem = nextWord('scramble');
+        if (!currentItem) return;
         currentInput = "";
         document.getElementById('scr-emoji').innerHTML = renderImg(currentItem, true);
         document.getElementById('scr-answer').innerText = "_".repeat(currentItem.en.length);
@@ -700,6 +798,12 @@
             b.onclick = () => handleSpellClick(item.char, b);
             pool.appendChild(b);
         });
+        beginRound(() => {
+            updateScore(-5);
+            const box = document.getElementById('scr-answer');
+            if (box) box.style.color = 'red';
+            setTimeout(initSpellMode, 500);
+        });
         speak(currentItem.en);
     }
     function handleSpellClick(char, element) {
@@ -711,6 +815,7 @@
         let dots = "_".repeat(currentItem.en.length - currentInput.length);
         document.getElementById('scr-answer').innerText = display + dots;
         if (currentInput.length === currentItem.en.length) {
+            endRound();
             if (currentInput === currentItem.en.toLowerCase()) {
                 updateScore(15);
                 document.getElementById('scr-answer').style.color = "lime";
@@ -748,7 +853,8 @@
     // --- LISTEN ---
     function initSoundMatch() {
         if (vocab.length === 0) return;
-        currentItem = vocab[Math.floor(Math.random() * vocab.length)];
+        currentItem = nextWord('sound');
+        if (!currentItem) return;
         const optsDiv = document.getElementById('sound-options');
         optsDiv.innerHTML = "";
         let options = [currentItem.en];
@@ -762,6 +868,7 @@
             b.innerText = o.toUpperCase();
             b.onclick = () => {
                 if (o === currentItem.en) {
+                    endRound();
                     updateScore(10);
                     initSoundMatch();
                 } else {
@@ -771,6 +878,10 @@
             };
             optsDiv.appendChild(b);
         });
+        beginRound(() => {
+            updateScore(-5);
+            initSoundMatch();
+        });
         speak(currentItem.en);
     }
     function playCurrentSound() { if (currentItem) speak(currentItem.en); }
@@ -778,12 +889,19 @@
     // --- SPEAK ---
     function initSpeakMode() {
         if (vocab.length === 0) return;
-        currentItem = vocab[Math.floor(Math.random() * vocab.length)];
+        currentItem = nextWord('speak');
+        if (!currentItem) return;
         document.getElementById('speak-emoji').innerHTML = renderImg(currentItem, true);
         document.getElementById('speak-word').innerText = currentItem.en.toUpperCase();
         document.getElementById('speak-feedback').innerText = 'Pulsa el micrófono y di la palabra';
         document.getElementById('speak-feedback').style.color = 'white';
         document.getElementById('mic-btn').classList.remove('listening');
+        beginRound(() => {
+            updateScore(-5);
+            const fb = document.getElementById('speak-feedback');
+            if (fb) { fb.innerText = 'Tiempo. Siguiente palabra.'; fb.style.color = 'red'; }
+            setTimeout(initSpeakMode, 500);
+        });
     }
     function startSpeaking() {
         if (!recognition) {
@@ -803,6 +921,7 @@
             const target = currentItem.en.toLowerCase();
             btn.classList.remove('listening');
             if (said === target || said.includes(target)) {
+                endRound();
                 updateScore(20);
                 document.getElementById('speak-feedback').innerText = '¡Perfecto! Dijiste: ' + said;
                 document.getElementById('speak-feedback').style.color = 'lime';
@@ -864,13 +983,16 @@
     updateVocabCount();
     document.getElementById('score-val').innerText = score;
     renderVocabList();
+    paintTimedToggle();
+    document.getElementById('timed-toggle').onclick = (e) => { e.stopPropagation(); toggleTimedMode(); };
     if (vocab.length) renderStudy();
 
     // Ajustes ocultos: mantener pulsada la barra de puntuación ~1,2 s
     (function bindHiddenSetup() {
         const bar = document.getElementById('stats-bar');
         let holdTimer = null;
-        const arm = () => {
+        const arm = (e) => {
+            if (e && e.target && e.target.closest && e.target.closest('#timed-toggle')) return;
             bar.classList.add('holding');
             holdTimer = setTimeout(() => {
                 holdTimer = null;
@@ -886,7 +1008,11 @@
         bar.addEventListener('mousedown', arm);
         bar.addEventListener('mouseup', cancel);
         bar.addEventListener('mouseleave', cancel);
-        bar.addEventListener('touchstart', (e) => { e.preventDefault(); arm(); }, { passive: false });
+        bar.addEventListener('touchstart', (e) => {
+            if (e.target.closest && e.target.closest('#timed-toggle')) return;
+            e.preventDefault();
+            arm(e);
+        }, { passive: false });
         bar.addEventListener('touchend', cancel);
         bar.addEventListener('touchcancel', cancel);
     })();
