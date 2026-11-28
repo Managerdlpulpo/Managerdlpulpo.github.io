@@ -686,7 +686,8 @@
         if (!currentItem) return;
         document.getElementById('scr-emoji').innerHTML = renderImg(currentItem, true);
         document.getElementById('scr-answer').innerText = '';
-        const letters = currentItem.en.toUpperCase().split('').sort(() => Math.random()-0.5);
+        // Only scramble non-space characters
+        const letters = currentItem.en.toUpperCase().replace(/ /g, '').split('').sort(() => Math.random()-0.5);
         document.getElementById('scr-letters').innerHTML = letters.map(l => `<div class="letter-bubble" onclick="addSpellLetter(this, '${l}')">${l}</div>`).join('');
         beginRound(() => { updateScore(-5); initSpellMode(); });
     }
@@ -696,8 +697,22 @@
         el.classList.add('used');
         const box = document.getElementById('scr-answer');
         box.innerText += letter;
-        const current = box.innerText.toLowerCase();
+        // Auto-insert spaces where they belong in the target
         const target = currentItem.en.toLowerCase();
+        let current = box.innerText.toLowerCase();
+        // Rebuild current by inserting spaces at the correct positions
+        let rebuilt = '';
+        let letterIdx = 0;
+        const nonSpaceCurrent = current.replace(/ /g, '');
+        for (let i = 0; i < target.length && letterIdx < nonSpaceCurrent.length; i++) {
+            if (target[i] === ' ') {
+                rebuilt += ' ';
+            } else {
+                rebuilt += nonSpaceCurrent[letterIdx++];
+            }
+        }
+        box.innerText = rebuilt.toUpperCase();
+        current = box.innerText.toLowerCase();
         if (current === target) {
             endRound();
             updateScore(15);
@@ -706,7 +721,7 @@
                 box.style.color = '';
                 initSpellMode();
             }, 600);
-        } else if (current.length >= target.length) {
+        } else if (current.replace(/ /g, '').length >= target.replace(/ /g, '').length) {
             updateScore(-3);
             setTimeout(initSpellMode, 500);
         }
